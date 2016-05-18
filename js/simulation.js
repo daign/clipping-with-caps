@@ -39,10 +39,11 @@ CAPS.Simulation.prototype = {
 		this.backStencil  = new THREE.Scene();
 		this.frontStencil = new THREE.Scene();
 
-		var box = new THREE.BoxGeometry( 24, 24, 24 );
-		var boxMesh = new THREE.Mesh( box, CAPS.MATERIAL.cap );
-		boxMesh.position.set( 5, -5, -9 );
-		this.capsScene.add( boxMesh );
+		var selection = new CAPS.Selection(
+			new THREE.Vector3( -7, -17, -21 ),
+			new THREE.Vector3( 17,   7,   3 )
+		);
+		this.capsScene.add( selection.boxMesh );
 
 		this.renderer = new THREE.WebGLRenderer( { antialias: true } );
 		this.renderer.setPixelRatio( window.devicePixelRatio );
