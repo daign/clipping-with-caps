@@ -40,10 +40,12 @@ CAPS.Simulation.prototype = {
 		this.frontStencil = new THREE.Scene();
 
 		var selection = new CAPS.Selection(
-			new THREE.Vector3( -7, -17, -21 ),
-			new THREE.Vector3( 17,   7,   3 )
+			new THREE.Vector3( -7, -14, -14 ),
+			new THREE.Vector3( 14,   9,   3 )
 		);
 		this.capsScene.add( selection.boxMesh );
+		this.scene.add( selection.touchMeshes );
+		this.scene.add( selection.displayMeshes );
 
 		this.renderer = new THREE.WebGLRenderer( { antialias: true } );
 		this.renderer.setPixelRatio( window.devicePixelRatio );
