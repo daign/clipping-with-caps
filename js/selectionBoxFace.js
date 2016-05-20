@@ -1,7 +1,5 @@
 CAPS.SelectionBoxFace = function ( axis, v0, v1, v2, v3, selection ) {
 
-	axis.toString = function () { return this.a + this.d; };
-
 	var frontFaceGeometry = new CAPS.PlaneGeometry( v0, v1, v2, v3 );
 	frontFaceGeometry.dynamic = true;
 	selection.meshGeometries.push( frontFaceGeometry );
@@ -10,7 +8,7 @@ CAPS.SelectionBoxFace = function ( axis, v0, v1, v2, v3, selection ) {
 	frontFaceMesh.axis = axis;
 	frontFaceMesh.guardian = this;
 	selection.touchMeshes.add( frontFaceMesh );
-	//selectables.push( frontFaceMesh );
+	selection.selectables.push( frontFaceMesh );
 
 	var backFaceGeometry = new CAPS.PlaneGeometry( v3, v2, v1, v0 );
 	backFaceGeometry.dynamic = true;

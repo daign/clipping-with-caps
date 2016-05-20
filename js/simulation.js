@@ -39,13 +39,13 @@ CAPS.Simulation.prototype = {
 		this.backStencil  = new THREE.Scene();
 		this.frontStencil = new THREE.Scene();
 
-		var selection = new CAPS.Selection(
+		this.selection = new CAPS.Selection(
 			new THREE.Vector3( -7, -14, -14 ),
 			new THREE.Vector3( 14,   9,   3 )
 		);
-		this.capsScene.add( selection.boxMesh );
-		this.scene.add( selection.touchMeshes );
-		this.scene.add( selection.displayMeshes );
+		this.capsScene.add( this.selection.boxMesh );
+		this.scene.add( this.selection.touchMeshes );
+		this.scene.add( this.selection.displayMeshes );
 
 		this.renderer = new THREE.WebGLRenderer( { antialias: true } );
 		this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -68,6 +68,8 @@ CAPS.Simulation.prototype = {
 			render();
 		};
 		window.addEventListener( 'resize', onWindowResize, false );
+
+		CAPS.picking( this );
 
 	},
 

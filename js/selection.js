@@ -20,15 +20,16 @@ CAPS.Selection = function ( low, high ) {
 	this.displayMeshes = new THREE.Object3D();
 	this.meshGeometries = [];
 	this.lineGeometries = [];
+	this.selectables = [];
 
 	this.faces = [];
 	var f = this.faces;
-	this.faces.push( new CAPS.SelectionBoxFace( { a: 'y', d: 1 }, v[ 0 ], v[ 1 ], v[ 5 ], v[ 4 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( { a: 'z', d: 1 }, v[ 0 ], v[ 2 ], v[ 3 ], v[ 1 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( { a: 'x', d: 1 }, v[ 0 ], v[ 4 ], v[ 6 ], v[ 2 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( { a: 'x', d: 2 }, v[ 7 ], v[ 5 ], v[ 1 ], v[ 3 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( { a: 'y', d: 2 }, v[ 7 ], v[ 3 ], v[ 2 ], v[ 6 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( { a: 'z', d: 2 }, v[ 7 ], v[ 6 ], v[ 4 ], v[ 5 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'y1', v[ 0 ], v[ 1 ], v[ 5 ], v[ 4 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'z1', v[ 0 ], v[ 2 ], v[ 3 ], v[ 1 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'x1', v[ 0 ], v[ 4 ], v[ 6 ], v[ 2 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'x2', v[ 7 ], v[ 5 ], v[ 1 ], v[ 3 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'y2', v[ 7 ], v[ 3 ], v[ 2 ], v[ 6 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'z2', v[ 7 ], v[ 6 ], v[ 4 ], v[ 5 ], this ) );
 
 	var l0  = new CAPS.SelectionBoxLine( v[ 0 ], v[ 1 ], f[ 0 ], f[ 1 ], this );
 	var l1  = new CAPS.SelectionBoxLine( v[ 0 ], v[ 2 ], f[ 1 ], f[ 2 ], this );
@@ -45,6 +46,8 @@ CAPS.Selection = function ( low, high ) {
 
 	this.setBox();
 	this.setUniforms();
+
+	this.oldValue = 0;
 
 };
 
@@ -92,6 +95,58 @@ CAPS.Selection.prototype = {
 		var uniforms = CAPS.UNIFORMS.clipping;
 		uniforms.clippingLow.value.copy(  this.limitLow );
 		uniforms.clippingHigh.value.copy( this.limitHigh );
+
+	},
+
+	dragStart: function ( axis ) {
+
+		if ( axis === 'x1' ) {
+			this.oldValue = this.limitLow.x;
+		} else if ( axis === 'x2' ) {
+			this.oldValue = this.limitHigh.x;
+		} else if ( axis === 'y1' ) {
+			this.oldValue = this.limitLow.y;
+		} else if ( axis === 'y2' ) {
+			this.oldValue = this.limitHigh.y;
+		} else if ( axis === 'z1' ) {
+			this.oldValue = this.limitLow.z;
+		} else if ( axis === 'z2' ) {
+			this.oldValue = this.limitHigh.z;
+		}
+
+	},
+
+	setFromMouse: function ( axis, value ) {
+
+		value += this.oldValue;
+		this.setValue( axis, value );
+
+		this.setBox();
+		this.setUniforms();
+
+		this.updateVertices();
+		this.updateGeometries();
+
+	},
+
+	setValue: function ( axis, value ) {
+
+		var buffer = 0.4;
+		var limit = 14;
+
+		if ( axis === 'x1' ) {
+			this.limitLow.x = Math.max( -limit, Math.min( this.limitHigh.x-buffer, value ) );
+		} else if ( axis === 'x2' ) {
+			this.limitHigh.x = Math.max( this.limitLow.x+buffer, Math.min( limit, value ) );
+		} else if ( axis === 'y1' ) {
+			this.limitLow.y = Math.max( -limit, Math.min( this.limitHigh.y-buffer, value ) );
+		} else if ( axis === 'y2' ) {
+			this.limitHigh.y = Math.max( this.limitLow.y+buffer, Math.min( limit, value ) );
+		} else if ( axis === 'z1' ) {
+			this.limitLow.z = Math.max( -limit, Math.min( this.limitHigh.z-buffer, value ) );
+		} else if ( axis === 'z2' ) {
+			this.limitHigh.z = Math.max( this.limitLow.z+buffer, Math.min( limit, value ) );
+		}
 
 	}
 
