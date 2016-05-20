@@ -27,8 +27,8 @@ CAPS.picking = function ( simulation ) {
 
 			var intersects = ray.intersectObject( plane );
 			if ( intersects.length > 0 ) {
-				var newPosition = intersects[ 0 ].point;
-				simulation.selection.setFromMouse( selected.axis, newPosition[ selected.axis.a ] );
+				simulation.selection.setFromMouse( selected.axis, intersects[ 0 ].point );
+				simulation.render();
 			}
 			return;
 
@@ -78,14 +78,11 @@ CAPS.picking = function ( simulation ) {
 
 		event.preventDefault();
 
-		var ray = new THREE.Raycaster();
-		ray.setFromCamera( mouse, simulation.camera );	
+		if ( intersected !== null ) {
 
-		var intersects = ray.intersectObjects( simulation.selection.selectables );
+			simulation.controls.enabled = false;
 
-		if ( intersects.length > 0 ) {
-
-			selected = intersects[ 0 ].object;
+			selected = intersected;
 			simulation.selection.dragStart( selected.axis );
 
 			document.body.style.cursor = 'move';
@@ -98,13 +95,9 @@ CAPS.picking = function ( simulation ) {
 
 		event.preventDefault();
 
-		if ( intersected ) {
+		simulation.controls.enabled = true;
 
-			plane.position.copy( intersected.position );
-			selected = null;
-
-		}
-
+		selected = null;
 		document.body.style.cursor = 'pointer';
 
 	}
@@ -116,6 +109,8 @@ CAPS.picking = function ( simulation ) {
 		}
 		intersected = null;
 		selected = null;
+
+		simulation.controls.enabled = true;
 
 		document.body.style.cursor = 'auto';
 

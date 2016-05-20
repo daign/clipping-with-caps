@@ -116,7 +116,23 @@ CAPS.Selection.prototype = {
 
 	},
 
-	setFromMouse: function ( axis, value ) {
+	setFromMouse: function ( axis, point ) {
+
+		var value = undefined;
+
+		if ( axis === 'x1' ) {
+			value = point.x;
+		} else if ( axis === 'x2' ) {
+			value = point.x;
+		} else if ( axis === 'y1' ) {
+			value = point.y;
+		} else if ( axis === 'y2' ) {
+			value = point.y;
+		} else if ( axis === 'z1' ) {
+			value = point.z;
+		} else if ( axis === 'z2' ) {
+			value = point.z;
+		}
 
 		value += this.oldValue;
 		this.setValue( axis, value );
