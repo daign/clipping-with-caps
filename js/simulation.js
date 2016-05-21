@@ -54,18 +54,17 @@ CAPS.Simulation.prototype = {
 		this.renderer.autoClear = false;
 		container.appendChild( this.renderer.domElement );
 
-		var render = function () {
-			self.render();
-		};
+		var throttledRender = CAPS.SCHEDULE.deferringThrottle( this._render, this, 40 );
+		this.throttledRender = throttledRender;
 
 		this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
-		this.controls.addEventListener( 'change', render );
+		this.controls.addEventListener( 'change', throttledRender );
 
 		var onWindowResize = function () {
 			self.camera.aspect = window.innerWidth / window.innerHeight;
 			self.camera.updateProjectionMatrix();
 			self.renderer.setSize( window.innerWidth, window.innerHeight );
-			render();
+			throttledRender();
 		};
 		window.addEventListener( 'resize', onWindowResize, false );
 
@@ -101,11 +100,11 @@ CAPS.Simulation.prototype = {
 		collada.updateMatrix();
 		this.scene.add( collada );
 
-		this.render();
+		this.throttledRender();
 
 	},
 
-	render: function () {
+	_render: function () {
 
 		this.renderer.clear();
 

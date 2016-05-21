@@ -28,7 +28,7 @@ CAPS.picking = function ( simulation ) {
 			var intersects = ray.intersectObject( plane );
 			if ( intersects.length > 0 ) {
 				simulation.selection.setFromMouse( selected.axis, intersects[ 0 ].point );
-				simulation.render();
+				simulation.throttledRender();
 			}
 			return;
 
@@ -70,7 +70,7 @@ CAPS.picking = function ( simulation ) {
 
 		}
 
-		simulation.render();
+		simulation.throttledRender();
 
 	}
 
