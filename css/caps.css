@@ -12,6 +12,14 @@ body {
 	z-index: 100;
 	display: block;
 }
+#controls {
+	color: #000;
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	z-index: 100;
+	display: block;
+}
 a {
 	color: #000;
 }

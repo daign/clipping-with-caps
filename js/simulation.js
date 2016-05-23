@@ -9,6 +9,8 @@ CAPS.Simulation = function () {
 	this.renderer = undefined;
 	this.controls = undefined;
 
+	this.showCaps = true;
+
 	this.init();
 
 };
@@ -70,6 +72,16 @@ CAPS.Simulation.prototype = {
 		};
 		window.addEventListener( 'resize', onWindowResize, false );
 
+		var showCapsInput = document.getElementById( 'showCaps' );
+		this.showCaps = showCapsInput.checked;
+		var onShowCaps = function () {
+			self.showCaps = showCapsInput.checked;
+			throttledRender();
+		};
+		showCapsInput.addEventListener( 'change', onShowCaps, false );
+
+		throttledRender();
+
 	},
 
 	initScene: function ( collada ) {
@@ -110,21 +122,25 @@ CAPS.Simulation.prototype = {
 
 		var gl = this.renderer.context;
 
-		this.renderer.state.setStencilTest( true );
+		if ( this.showCaps ) {
 
-		this.renderer.state.setStencilFunc( gl.ALWAYS, 1, 0xff );
-		this.renderer.state.setStencilOp( gl.KEEP, gl.KEEP, gl.INCR );
-		this.renderer.render( this.backStencil, this.camera );
+			this.renderer.state.setStencilTest( true );
 
-		this.renderer.state.setStencilFunc( gl.ALWAYS, 1, 0xff );
-		this.renderer.state.setStencilOp( gl.KEEP, gl.KEEP, gl.DECR );
-		this.renderer.render( this.frontStencil, this.camera );
+			this.renderer.state.setStencilFunc( gl.ALWAYS, 1, 0xff );
+			this.renderer.state.setStencilOp( gl.KEEP, gl.KEEP, gl.INCR );
+			this.renderer.render( this.backStencil, this.camera );
 
-		this.renderer.state.setStencilFunc( gl.EQUAL, 1, 0xff );
-		this.renderer.state.setStencilOp( gl.KEEP, gl.KEEP, gl.KEEP );
-		this.renderer.render( this.capsScene, this.camera );
+			this.renderer.state.setStencilFunc( gl.ALWAYS, 1, 0xff );
+			this.renderer.state.setStencilOp( gl.KEEP, gl.KEEP, gl.DECR );
+			this.renderer.render( this.frontStencil, this.camera );
 
-		this.renderer.state.setStencilTest( false );
+			this.renderer.state.setStencilFunc( gl.EQUAL, 1, 0xff );
+			this.renderer.state.setStencilOp( gl.KEEP, gl.KEEP, gl.KEEP );
+			this.renderer.render( this.capsScene, this.camera );
+
+			this.renderer.state.setStencilTest( false );
+
+		}
 
 		this.renderer.render( this.scene, this.camera );
 
