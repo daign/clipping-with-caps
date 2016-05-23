@@ -1,38 +1,17 @@
 CAPS.picking = function ( simulation ) {
 
-	var intersected = undefined;
-	var selected = undefined;
-
+	var intersected = null;
 	var mouse = new THREE.Vector2();
-
+	var ray = new THREE.Raycaster();
 	var plane = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000, 8, 8 ), CAPS.MATERIAL.Invisible );
 	simulation.scene.add( plane );
 
-	simulation.renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
-	simulation.renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
-	simulation.renderer.domElement.addEventListener( 'mouseup',   onDocumentMouseUp,   false );
-	simulation.renderer.domElement.addEventListener( 'mouseout',  onDocumentMouseOut,  false );
-
-	function onDocumentMouseMove( event ) {
-
-		event.preventDefault();
+	var targeting = function ( event ) {
 
 		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 		mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-		var ray = new THREE.Raycaster();
 		ray.setFromCamera( mouse, simulation.camera );	
-
-		if ( selected ) {
-
-			var intersects = ray.intersectObject( plane );
-			if ( intersects.length > 0 ) {
-				simulation.selection.setFromMouse( selected.axis, intersects[ 0 ].point );
-				simulation.throttledRender();
-			}
-			return;
-
-		}
 
 		var intersects = ray.intersectObjects( simulation.selection.selectables );
 
@@ -42,79 +21,84 @@ CAPS.picking = function ( simulation ) {
 
 			if ( intersected !== candidate ) {
 
-				if ( intersected && intersected.guardian ) {
+				if ( intersected !== null ) {
 					intersected.guardian.rayOut();
 				}
 
+				candidate.guardian.rayOver();
+
 				intersected = candidate;
-				if ( intersected && intersected.guardian ) {
-					intersected.guardian.rayOver();
-				}
 
-				plane.position.copy( intersected.position );
-				plane.lookAt( simulation.camera.position );
+				simulation.renderer.domElement.style.cursor = 'pointer';
+				simulation.throttledRender();
 
 			}
 
-			document.body.style.cursor = 'pointer';
+		} else if ( intersected !== null ) {
 
-		} else {
-
-			if ( intersected && intersected.guardian ) {
-				intersected.guardian.rayOut();
-			}
-
+			intersected.guardian.rayOut();
 			intersected = null;
 
-			document.body.style.cursor = 'auto';
+			simulation.renderer.domElement.style.cursor = 'auto';
+			simulation.throttledRender();
 
 		}
 
-		simulation.throttledRender();
+	};
 
-	}
-
-	function onDocumentMouseDown( event ) {
-
-		event.preventDefault();
+	var beginDrag = function ( event ) {
 
 		if ( intersected !== null ) {
 
 			simulation.controls.enabled = false;
 
-			selected = intersected;
-			simulation.selection.dragStart( selected.axis );
+			var axis = intersected.axis;
+			simulation.selection.dragStart( axis );
 
-			document.body.style.cursor = 'move';
+			plane.position.copy( intersected.position );
+			plane.lookAt( simulation.camera.position );
+
+			simulation.renderer.domElement.style.cursor = 'move';
+
+			var continueDrag = function ( event ) {
+
+				event.preventDefault();
+				event.stopPropagation();
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+				ray.setFromCamera( mouse, simulation.camera );	
+
+				var intersects = ray.intersectObject( plane );
+
+				if ( intersects.length > 0 ) {
+					simulation.selection.setFromMouse( axis, intersects[ 0 ].point );
+					simulation.throttledRender();
+				}
+
+			};
+
+			var endDrag = function ( event ) {
+
+				simulation.controls.enabled = true;
+
+				simulation.renderer.domElement.style.cursor = 'pointer';
+
+				document.removeEventListener( 'mousemove', continueDrag, true );
+				document.removeEventListener( 'mouseup',   endDrag,      false );
+
+			};
+
+			document.addEventListener( 'mousemove', continueDrag, true );
+			document.addEventListener( 'mouseup',   endDrag,      false );
 
 		}
 
-	}
+	};
 
-	function onDocumentMouseUp( event ) {
+	simulation.renderer.domElement.addEventListener( 'mousemove', targeting, true );
+	simulation.renderer.domElement.addEventListener( 'mousedown', beginDrag, false );
 
-		event.preventDefault();
-
-		simulation.controls.enabled = true;
-
-		selected = null;
-		document.body.style.cursor = 'pointer';
-
-	}
-
-	function onDocumentMouseOut( event ) {
-
-		if ( intersected && intersected.guardian ) {
-			intersected.guardian.rayOut();
-		}
-		intersected = null;
-		selected = null;
-
-		simulation.controls.enabled = true;
-
-		document.body.style.cursor = 'auto';
-
-	}
-
-}
+};
 

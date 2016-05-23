@@ -57,6 +57,8 @@ CAPS.Simulation.prototype = {
 		var throttledRender = CAPS.SCHEDULE.deferringThrottle( this._render, this, 40 );
 		this.throttledRender = throttledRender;
 
+		CAPS.picking( this ); // must come before OrbitControls, so it can cancel them
+
 		this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
 		this.controls.addEventListener( 'change', throttledRender );
 
@@ -67,8 +69,6 @@ CAPS.Simulation.prototype = {
 			throttledRender();
 		};
 		window.addEventListener( 'resize', onWindowResize, false );
-
-		CAPS.picking( this );
 
 	},
 
