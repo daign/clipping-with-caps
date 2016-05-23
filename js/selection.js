@@ -1,14 +1,5 @@
 CAPS.Selection = function ( low, high ) {
 
-	var axis = {
-		x1: new THREE.Vector3( -1,  0,  0 ),
-		x2: new THREE.Vector3(  1,  0,  0 ),
-		y1: new THREE.Vector3(  0, -1,  0 ),
-		y2: new THREE.Vector3(  0,  1,  0 ),
-		z1: new THREE.Vector3(  0,  0, -1 ),
-		z2: new THREE.Vector3(  0,  0,  1 )
-	};
-
 	this.limitLow = low;
 	this.limitHigh = high;
 
@@ -33,12 +24,12 @@ CAPS.Selection = function ( low, high ) {
 
 	this.faces = [];
 	var f = this.faces;
-	this.faces.push( new CAPS.SelectionBoxFace( axis.y1, v[ 0 ], v[ 1 ], v[ 5 ], v[ 4 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( axis.z1, v[ 0 ], v[ 2 ], v[ 3 ], v[ 1 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( axis.x1, v[ 0 ], v[ 4 ], v[ 6 ], v[ 2 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( axis.x2, v[ 7 ], v[ 5 ], v[ 1 ], v[ 3 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( axis.y2, v[ 7 ], v[ 3 ], v[ 2 ], v[ 6 ], this ) );
-	this.faces.push( new CAPS.SelectionBoxFace( axis.z2, v[ 7 ], v[ 6 ], v[ 4 ], v[ 5 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'y1', v[ 0 ], v[ 1 ], v[ 5 ], v[ 4 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'z1', v[ 0 ], v[ 2 ], v[ 3 ], v[ 1 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'x1', v[ 0 ], v[ 4 ], v[ 6 ], v[ 2 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'x2', v[ 7 ], v[ 5 ], v[ 1 ], v[ 3 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'y2', v[ 7 ], v[ 3 ], v[ 2 ], v[ 6 ], this ) );
+	this.faces.push( new CAPS.SelectionBoxFace( 'z2', v[ 7 ], v[ 6 ], v[ 4 ], v[ 5 ], this ) );
 
 	var l0  = new CAPS.SelectionBoxLine( v[ 0 ], v[ 1 ], f[ 0 ], f[ 1 ], this );
 	var l1  = new CAPS.SelectionBoxLine( v[ 0 ], v[ 2 ], f[ 1 ], f[ 2 ], this );
@@ -55,8 +46,6 @@ CAPS.Selection = function ( low, high ) {
 
 	this.setBox();
 	this.setUniforms();
-
-	this.oldValue = undefined;
 
 };
 
@@ -109,56 +98,30 @@ CAPS.Selection.prototype = {
 
 	},
 
-	dragStart: function ( axis ) {
+	setValue: function ( axis, value ) {
 
-		this.oldValue = new THREE.Vector3().add(
-			new THREE.Vector3( 1, 1, 1 ).sub( axis ).divideScalar( 2 ).multiply( this.limitLow )
-		).add(
-			new THREE.Vector3( 1, 1, 1 ).add( axis ).divideScalar( 2 ).multiply( this.limitHigh )
-		);
+		var buffer = 0.4;
+		var limit = 14;
 
-	},
-
-	setFromMouse: function ( axis, point ) {
-
-		var value = undefined;
-
-		if ( axis.x !== 0 ) {
-			value = point.x + this.oldValue.x;
-		} else if ( axis.y !== 0 ) {
-			value = point.y + this.oldValue.y;
-		} else if ( axis.z !== 0 ) {
-			value = point.z + this.oldValue.z;
+		if ( axis === 'x1' ) {
+			this.limitLow.x = Math.max( -limit, Math.min( this.limitHigh.x-buffer, value ) );
+		} else if ( axis === 'x2' ) {
+			this.limitHigh.x = Math.max( this.limitLow.x+buffer, Math.min( limit, value ) );
+		} else if ( axis === 'y1' ) {
+			this.limitLow.y = Math.max( -limit, Math.min( this.limitHigh.y-buffer, value ) );
+		} else if ( axis === 'y2' ) {
+			this.limitHigh.y = Math.max( this.limitLow.y+buffer, Math.min( limit, value ) );
+		} else if ( axis === 'z1' ) {
+			this.limitLow.z = Math.max( -limit, Math.min( this.limitHigh.z-buffer, value ) );
+		} else if ( axis === 'z2' ) {
+			this.limitHigh.z = Math.max( this.limitLow.z+buffer, Math.min( limit, value ) );
 		}
-
-		this.setValue( axis, value );
 
 		this.setBox();
 		this.setUniforms();
 
 		this.updateVertices();
 		this.updateGeometries();
-
-	},
-
-	setValue: function ( axis, value ) {
-
-		var buffer = 0.4;
-		var limit = 14;
-
-		if ( axis.x === -1 ) {
-			this.limitLow.x = Math.max( -limit, Math.min( this.limitHigh.x-buffer, value ) );
-		} else if ( axis.x === 1 ) {
-			this.limitHigh.x = Math.max( this.limitLow.x+buffer, Math.min( limit, value ) );
-		} else if ( axis.y === -1 ) {
-			this.limitLow.y = Math.max( -limit, Math.min( this.limitHigh.y-buffer, value ) );
-		} else if ( axis.y === 1 ) {
-			this.limitHigh.y = Math.max( this.limitLow.y+buffer, Math.min( limit, value ) );
-		} else if ( axis.z === -1 ) {
-			this.limitLow.z = Math.max( -limit, Math.min( this.limitHigh.z-buffer, value ) );
-		} else if ( axis.z === 1 ) {
-			this.limitHigh.z = Math.max( this.limitLow.z+buffer, Math.min( limit, value ) );
-		}
 
 	}
 

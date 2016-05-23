@@ -3,8 +3,6 @@ CAPS.picking = function ( simulation ) {
 	var intersected = null;
 	var mouse = new THREE.Vector2();
 	var ray = new THREE.Raycaster();
-	var plane = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000, 8, 8 ), CAPS.MATERIAL.Invisible );
-	simulation.scene.add( plane );
 
 	var targeting = function ( event ) {
 
@@ -53,10 +51,21 @@ CAPS.picking = function ( simulation ) {
 			simulation.controls.enabled = false;
 
 			var axis = intersected.axis;
-			simulation.selection.dragStart( axis );
+			var axisNormal = {
+				x1: new THREE.Vector3( -1,  0,  0 ),
+				x2: new THREE.Vector3(  1,  0,  0 ),
+				y1: new THREE.Vector3(  0, -1,  0 ),
+				y2: new THREE.Vector3(  0,  1,  0 ),
+				z1: new THREE.Vector3(  0,  0, -1 ),
+				z2: new THREE.Vector3(  0,  0,  1 )
+			}[ axis ];
 
-			plane.position.copy( intersected.position );
-			plane.lookAt( simulation.camera.position );
+			mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			var click0 = new THREE.Vector3( mouse.x, mouse.y, 0 ).unproject( simulation.camera );
+
+			var limitLowStart = simulation.selection.limitLow.clone();
+			var limitHighStart = simulation.selection.limitHigh.clone();
 
 			simulation.renderer.domElement.style.cursor = 'move';
 
@@ -67,15 +76,29 @@ CAPS.picking = function ( simulation ) {
 
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				var clickT = new THREE.Vector3( mouse.x, mouse.y, 0 ).unproject( simulation.camera );
 
-				ray.setFromCamera( mouse, simulation.camera );	
+				clickT.sub( click0 );
+				var f = Math.pow( clickT.length(), 2 ) / clickT.dot( axisNormal );
 
-				var intersects = ray.intersectObject( plane );
+				var value = f*20;
 
-				if ( intersects.length > 0 ) {
-					simulation.selection.setFromMouse( axis, intersects[ 0 ].point );
-					simulation.throttledRender();
+				if ( axis === 'x1' ) {
+					value = limitLowStart.x - value;
+				} else if ( axis === 'x2' ) {
+					value = limitHighStart.x + value;
+				} else if ( axis === 'y1' ) {
+					value = limitLowStart.y - value;
+				} else if ( axis === 'y2' ) {
+					value = limitHighStart.y + value;
+				} else if ( axis === 'z1' ) {
+					value = limitLowStart.z - value;
+				} else if ( axis === 'z2' ) {
+					value = limitHighStart.z + value;
 				}
+
+				simulation.selection.setValue( axis, value );
+				simulation.throttledRender();
 
 			};
 
