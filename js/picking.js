@@ -1,8 +1,12 @@
 CAPS.picking = function ( simulation ) {
 
 	var intersected = null;
+	var intersectionPoint = undefined;
 	var mouse = new THREE.Vector2();
 	var ray = new THREE.Raycaster();
+
+	var plane = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100, 4, 4 ), CAPS.MATERIAL.Invisible );
+	simulation.scene.add( plane );
 
 	var targeting = function ( event ) {
 
@@ -32,6 +36,8 @@ CAPS.picking = function ( simulation ) {
 
 			}
 
+			intersectionPoint = intersects[ 0 ].point;
+
 		} else if ( intersected !== null ) {
 
 			intersected.guardian.rayOut();
@@ -60,12 +66,19 @@ CAPS.picking = function ( simulation ) {
 				z2: new THREE.Vector3(  0,  0,  1 )
 			}[ axis ];
 
-			mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-			var click0 = new THREE.Vector3( mouse.x, mouse.y, 0 ).unproject( simulation.camera );
+			if ( axis === 'x1' || axis === 'x2' ) {
+				intersectionPoint.setX( 0 );
+			} else if ( axis === 'y1' || axis === 'y2' ) {
+				intersectionPoint.setY( 0 );
+			} else if ( axis === 'z1' || axis === 'z2' ) {
+				intersectionPoint.setZ( 0 );
+			}
+			plane.position.copy( intersectionPoint );
 
-			var limitLowStart = simulation.selection.limitLow.clone();
-			var limitHighStart = simulation.selection.limitHigh.clone();
+			var newNormal = simulation.camera.position.clone().sub(
+				simulation.camera.position.clone().projectOnVector( axisNormal )
+			);
+			plane.lookAt( newNormal.add( intersectionPoint ) );
 
 			simulation.renderer.domElement.style.cursor = 'move';
 
@@ -76,29 +89,25 @@ CAPS.picking = function ( simulation ) {
 
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-				var clickT = new THREE.Vector3( mouse.x, mouse.y, 0 ).unproject( simulation.camera );
 
-				clickT.sub( click0 );
-				var f = Math.pow( clickT.length(), 2 ) / clickT.dot( axisNormal );
+				ray.setFromCamera( mouse, simulation.camera );	
 
-				var value = f*20;
+				var intersects = ray.intersectObject( plane );
 
-				if ( axis === 'x1' ) {
-					value = limitLowStart.x - value;
-				} else if ( axis === 'x2' ) {
-					value = limitHighStart.x + value;
-				} else if ( axis === 'y1' ) {
-					value = limitLowStart.y - value;
-				} else if ( axis === 'y2' ) {
-					value = limitHighStart.y + value;
-				} else if ( axis === 'z1' ) {
-					value = limitLowStart.z - value;
-				} else if ( axis === 'z2' ) {
-					value = limitHighStart.z + value;
+				if ( intersects.length > 0 ) {
+
+					if ( axis === 'x1' || axis === 'x2' ) {
+						value = intersects[ 0 ].point.x;
+					} else if ( axis === 'y1' || axis === 'y2' ) {
+						value = intersects[ 0 ].point.y;
+					} else if ( axis === 'z1' || axis === 'z2' ) {
+						value = intersects[ 0 ].point.z;
+					}
+
+					simulation.selection.setValue( axis, value );
+					simulation.throttledRender();
+
 				}
-
-				simulation.selection.setValue( axis, value );
-				simulation.throttledRender();
 
 			};
 
