@@ -81,6 +81,7 @@ CAPS.picking = function ( simulation ) {
 			plane.lookAt( newNormal.add( intersectionPoint ) );
 
 			simulation.renderer.domElement.style.cursor = 'move';
+			simulation.throttledRender();
 
 			var continueDrag = function ( event ) {
 
