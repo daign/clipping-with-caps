@@ -1,17 +1,24 @@
 CAPS.picking = function ( simulation ) {
 
 	var intersected = null;
-	var intersectionPoint = undefined;
 	var mouse = new THREE.Vector2();
 	var ray = new THREE.Raycaster();
+
+	var normals = {
+		x1: new THREE.Vector3( -1,  0,  0 ),
+		x2: new THREE.Vector3(  1,  0,  0 ),
+		y1: new THREE.Vector3(  0, -1,  0 ),
+		y2: new THREE.Vector3(  0,  1,  0 ),
+		z1: new THREE.Vector3(  0,  0, -1 ),
+		z2: new THREE.Vector3(  0,  0,  1 )
+	};
 
 	var plane = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100, 4, 4 ), CAPS.MATERIAL.Invisible );
 	simulation.scene.add( plane );
 
 	var targeting = function ( event ) {
 
-		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-		mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+		mouse.setToNormalizedDeviceCoordinates( event, window );
 
 		ray.setFromCamera( mouse, simulation.camera );	
 
@@ -36,8 +43,6 @@ CAPS.picking = function ( simulation ) {
 
 			}
 
-			intersectionPoint = intersects[ 0 ].point;
-
 		} else if ( intersected !== null ) {
 
 			intersected.guardian.rayOut();
@@ -52,19 +57,22 @@ CAPS.picking = function ( simulation ) {
 
 	var beginDrag = function ( event ) {
 
-		if ( intersected !== null ) {
+		mouse.setToNormalizedDeviceCoordinates( event, window );
+
+		ray.setFromCamera( mouse, simulation.camera );	
+
+		var intersects = ray.intersectObjects( simulation.selection.selectables );
+
+		if ( intersects.length > 0 ) {
+
+			event.preventDefault();
+			event.stopPropagation();
 
 			simulation.controls.enabled = false;
 
-			var axis = intersected.axis;
-			var axisNormal = {
-				x1: new THREE.Vector3( -1,  0,  0 ),
-				x2: new THREE.Vector3(  1,  0,  0 ),
-				y1: new THREE.Vector3(  0, -1,  0 ),
-				y2: new THREE.Vector3(  0,  1,  0 ),
-				z1: new THREE.Vector3(  0,  0, -1 ),
-				z2: new THREE.Vector3(  0,  0,  1 )
-			}[ axis ];
+			var intersectionPoint = intersects[ 0 ].point;
+
+			var axis = intersects[ 0 ].object.axis;
 
 			if ( axis === 'x1' || axis === 'x2' ) {
 				intersectionPoint.setX( 0 );
@@ -76,7 +84,7 @@ CAPS.picking = function ( simulation ) {
 			plane.position.copy( intersectionPoint );
 
 			var newNormal = simulation.camera.position.clone().sub(
-				simulation.camera.position.clone().projectOnVector( axisNormal )
+				simulation.camera.position.clone().projectOnVector( normals[ axis ] )
 			);
 			plane.lookAt( newNormal.add( intersectionPoint ) );
 
@@ -88,8 +96,7 @@ CAPS.picking = function ( simulation ) {
 				event.preventDefault();
 				event.stopPropagation();
 
-				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				mouse.setToNormalizedDeviceCoordinates( event, window );
 
 				ray.setFromCamera( mouse, simulation.camera );	
 
@@ -118,20 +125,31 @@ CAPS.picking = function ( simulation ) {
 
 				simulation.renderer.domElement.style.cursor = 'pointer';
 
-				document.removeEventListener( 'mousemove', continueDrag, true );
-				document.removeEventListener( 'mouseup',   endDrag,      false );
+				document.removeEventListener( 'mousemove',   continueDrag, true );
+				document.removeEventListener( 'touchmove',   continueDrag, true );
+
+				document.removeEventListener( 'mouseup',     endDrag, false );
+				document.removeEventListener( 'touchend',    endDrag, false );
+				document.removeEventListener( 'touchcancel', endDrag, false );
+				document.removeEventListener( 'touchleave',  endDrag, false );
 
 			};
 
 			document.addEventListener( 'mousemove', continueDrag, true );
-			document.addEventListener( 'mouseup',   endDrag,      false );
+			document.addEventListener( 'touchmove', continueDrag, true );
+
+			document.addEventListener( 'mouseup',     endDrag, false );
+			document.addEventListener( 'touchend',    endDrag, false );
+			document.addEventListener( 'touchcancel', endDrag, false );
+			document.addEventListener( 'touchleave',  endDrag, false );
 
 		}
 
 	};
 
-	simulation.renderer.domElement.addEventListener( 'mousemove', targeting, true );
-	simulation.renderer.domElement.addEventListener( 'mousedown', beginDrag, false );
+	simulation.renderer.domElement.addEventListener( 'mousemove',  targeting, true );
+	simulation.renderer.domElement.addEventListener( 'mousedown',  beginDrag, false );
+	simulation.renderer.domElement.addEventListener( 'touchstart', beginDrag, false );
 
 };
 
