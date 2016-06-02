@@ -22,7 +22,7 @@ It is however possible to visually close this gaps without actually constructing
 
 When there is just one clipping plane on an otherwise closed mesh and backface rendering is enabled,
 then there are backsides visible through the whole opening.
-Renderer into a stencil this area can be used to define where to render the caps.
+Rendered into a stencil this area can be used to define where to render the caps.
 First a scene showing only the backfaces is used to increment the stencil and then another scene
 showing the front faces decrements the stencil.
 The resulting stencil is applied to a scene rendering a plane at the location of the clipping plane.
